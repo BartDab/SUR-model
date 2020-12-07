@@ -1,0 +1,148 @@
+---
+title: "Projekt_1_AW"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tseries)
+```
+
+
+
+```{r}
+y1<-read.csv("E:\\R\\wig_m.csv", sep=",",dec=".",header=TRUE, stringsAsFactors = FALSE)
+y2<-read.csv("E:\\R\\wig_banki_m.csv", sep=",",dec=".",header=TRUE, stringsAsFactors = FALSE)
+y3<-read.csv("E:\\R\\wig_budow_m.csv", sep=",",dec=".",header=TRUE, stringsAsFactors = FALSE)
+y4<-read.csv("E:\\R\\wig_chemia_m.csv", sep=",",dec=".",header=TRUE, stringsAsFactors = FALSE)
+y5<-read.csv("E:\\R\\wig_energ_m.csv", sep=",",dec=".",header=TRUE, stringsAsFactors = FALSE)
+y6<-read.csv("E:\\R\\wig_media_m.csv", sep=",",dec=".",header=TRUE, stringsAsFactors = FALSE)
+y7<-read.csv("E:\\R\\wig_paliwa_m.csv", sep=",",dec=".",header=TRUE, stringsAsFactors = FALSE)
+y8<-read.csv("E:\\R\\wig_spozyw_m.csv", sep=",",dec=".",header=TRUE, stringsAsFactors = FALSE)
+```
+
+
+
+```{r}
+dane <- matrix(0,132,8)
+colnames(dane) <- c("y1","y2","y3","y4","y5","y6","y7","y8")
+```
+
+```{r}
+stopa_wolna<-0.02/12
+for (i in 2:132)
+{
+  dane[i,1] <- log(y1[i,5]/y1[i-1,5])-stopa_wolna
+  dane[i,2] <- log(y2[i,5]/y2[i-1,5])-stopa_wolna
+  dane[i,3] <- log(y3[i,5]/y3[i-1,5])-stopa_wolna
+  dane[i,4] <- log(y4[i,5]/y4[i-1,5])-stopa_wolna
+  dane[i,5] <- log(y5[i,5]/y5[i-1,5])-stopa_wolna
+  dane[i,6] <- log(y6[i,5]/y6[i-1,5])-stopa_wolna
+  dane[i,7] <- log(y7[i,5]/y7[i-1,5])-stopa_wolna
+  dane[i,8] <- log(y8[i,5]/y8[i-1,5])-stopa_wolna
+}
+```
+
+```{r}
+residuals<-matrix(data=0, nrow=132, ncol=7)
+coeffic<-matrix(data=0, nrow=7, ncol=1)
+colnames(residuals) <-c("r_y2","r_y3","r_y4","r_y5","r_y6","r_y7","r_y8")
+```
+
+```{r}
+mnk1 <- lm(dane[,2] ~ dane[,1])
+mnk2 <- lm(dane[,3] ~ dane[,1])
+mnk3 <- lm(dane[,4] ~ dane[,1])
+mnk4 <- lm(dane[,5] ~ dane[,1])
+mnk5 <- lm(dane[,6] ~ dane[,1])
+mnk6 <- lm(dane[,7] ~ dane[,1])
+mnk7 <- lm(dane[,8] ~ dane[,1])
+```
+
+```{r}
+mnk1
+mnk2
+mnk3
+mnk4
+mnk5
+mnk6
+mnk7
+```
+Sprawdzamy istotnosc parametrow dla poziomu 0.05
+
+```{r}
+
+summary(mnk1)$coefficients[1,4] < 0.05
+summary(mnk2)$coefficients[1,4] < 0.05
+summary(mnk3)$coefficients[1,4] < 0.05
+summary(mnk4)$coefficients[1,4] < 0.05
+summary(mnk5)$coefficients[1,4] < 0.05
+summary(mnk6)$coefficients[1,4] < 0.05
+summary(mnk7)$coefficients[1,4] < 0.05
+
+```
+
+```{R}
+cov(dane[,-1])
+
+```
+
+```{r}
+for (i in 1:132)
+{
+  residuals[i,1] <- mnk1$residuals[i]
+  residuals[i,2] <- mnk2$residuals[i]
+  residuals[i,3] <- mnk3$residuals[i]
+  residuals[i,4] <- mnk4$residuals[i]
+  residuals[i,5] <- mnk5$residuals[i]
+  residuals[i,6] <- mnk6$residuals[i]
+  residuals[i,7] <- mnk7$residuals[i]
+}
+```
+
+```{r}
+means<-matrix(0,7,1)
+sigma<- matrix (0,7,7)
+for (i in 1:7)
+{
+  means[i,1] <- mean(residuals[,i])
+}
+means
+```
+
+```{r}
+for (i in 1:7) {
+  for (j in 1:7){
+      if (i==j)
+        sigma[i,j] <-(sum((residuals[,i]-means[i])^2))/132
+      else
+        sigma[i,j] <- (sum((residuals[,i]-means[i])*(residuals[,j]-means[j])))/132
+  }
+}
+sigma
+```
+
+```{r}
+alfa<-c(mnk1$coefficients[1],mnk2$coefficients[1],mnk3$coefficients[1],mnk4$coefficients[1],mnk5$coefficients[1],mnk6$coefficients[1],mnk7$coefficients[1])
+alfa
+```
+
+```{r}
+N<-ncol(sigma)
+K<-1
+obs<-nrow(dane)
+wig_mean <-mean(dane[,1])
+v_inv <-1/(var(dane[,1]))   
+alfa_T <- t(alfa)   
+sigma_inv<-solve(sigma)
+```
+
+```{r}
+GRS = (obs/N)*((obs-N-K)/(obs-K-1))*((alfa_T%*%sigma_inv%*%alfa)/(1+wig_mean*v_inv*wig_mean))
+GRS
+F_stat <- qf(0.95, obs, obs-N-K)
+F_stat
+```
+
+
+
+
